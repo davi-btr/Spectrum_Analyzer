@@ -59,4 +59,5 @@ set_global_assignment -name VERILOG_FILE codec_init_FSM.v
 set_global_assignment -name VERILOG_FILE Spectrum_Analyser.v
 set_global_assignment -name VERILOG_FILE CoDec_IF.v
 set_global_assignment -name VERILOG_FILE i2s_master.v
-set_global_assignment -name QIP_FILE ram2_test.qip
+set_global_assignment -name QIP_FILE cmplx_mult.qip
+set_global_assignment -name VERILOG_FILE FFT_block.v

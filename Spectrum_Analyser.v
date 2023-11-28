@@ -130,11 +130,16 @@ RAM_dualport ram_dualport(	//TUTTA DA CAPIRE E FARE
 	.q(ram_rd_data)
 );
 
-FFT_calc my_FFT_calc (
+FFT_block FFT_calc (
     .clk(clk),
     .rst_n(rst_n),
-    
     //SEGNALI PER FFT BLOCK
+	 .start(),
+	 .done(),
+	 //interfaccia buffer
+	 .address(),
+	 .q()
+	 //...
 
 );
 

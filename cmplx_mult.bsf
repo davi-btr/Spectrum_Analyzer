@@ -1,0 +1,89 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2013 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.2"))
+(symbol
+	(rect 0 0 304 176)
+	(text "cmplx_mult" (rect 86 0 165 16)(font "Arial" (font_size 10)))
+	(text "inst" (rect 8 160 25 172)(font "Arial" ))
+	(port
+		(pt 0 56)
+		(input)
+		(text "dataa_real[31..0]" (rect 0 0 95 14)(font "Arial" (font_size 8)))
+		(text "dataa_real[31..0]" (rect 4 32 162 55)(font "Arial" (font_size 8)))
+		(line (pt 0 56)(pt 139 56)(line_width 3))
+	)
+	(port
+		(pt 0 72)
+		(input)
+		(text "dataa_imag[31..0]" (rect 0 0 100 14)(font "Arial" (font_size 8)))
+		(text "dataa_imag[31..0]" (rect 4 48 171 71)(font "Arial" (font_size 8)))
+		(line (pt 0 72)(pt 139 72)(line_width 3))
+	)
+	(port
+		(pt 0 88)
+		(input)
+		(text "datab_real[31..0]" (rect 0 0 95 14)(font "Arial" (font_size 8)))
+		(text "datab_real[31..0]" (rect 4 64 161 87)(font "Arial" (font_size 8)))
+		(line (pt 0 88)(pt 139 88)(line_width 3))
+	)
+	(port
+		(pt 0 104)
+		(input)
+		(text "datab_imag[31..0]" (rect 0 0 100 14)(font "Arial" (font_size 8)))
+		(text "datab_imag[31..0]" (rect 4 80 170 103)(font "Arial" (font_size 8)))
+		(line (pt 0 104)(pt 139 104)(line_width 3))
+	)
+	(port
+		(pt 304 72)
+		(output)
+		(text "result_real[63..0]" (rect 0 0 95 14)(font "Arial" (font_size 8)))
+		(text "result_real[63..0]" (rect 143 48 299 71)(font "Arial" (font_size 8)))
+		(line (pt 304 72)(pt 164 72)(line_width 3))
+	)
+	(port
+		(pt 304 88)
+		(output)
+		(text "result_imag[63..0]" (rect 0 0 100 14)(font "Arial" (font_size 8)))
+		(text "result_imag[63..0]" (rect 134 64 299 87)(font "Arial" (font_size 8)))
+		(line (pt 304 88)(pt 164 88)(line_width 3))
+	)
+	(drawing
+		(text "Implementation Style: Automatic" (rect 27 136 325 293)(font "Arial" ))
+		(text "Clock Cycles: 0" (rect 166 144 464 309)(font "Arial" ))
+		(text "dataa: Signed" (rect 183 152 481 325)(font "Arial" ))
+		(text "datab: Signed" (rect 182 160 480 341)(font "Arial" ))
+		(line (pt 152 80)(pt 158 86)(line_width 3))
+		(line (pt 152 80)(pt 158 74)(line_width 3))
+		(line (pt 152 80)(pt 146 86)(line_width 3))
+		(line (pt 152 80)(pt 146 74)(line_width 3))
+		(line (pt 139 56)(pt 147 66)(line_width 3))
+		(line (pt 139 104)(pt 147 94)(line_width 3))
+		(line (pt 0 0)(pt 306 0))
+		(line (pt 306 0)(pt 306 183))
+		(line (pt 0 183)(pt 306 183))
+		(line (pt 0 0)(pt 0 183))
+		(line (pt 104 40)(pt 210 40))
+		(line (pt 210 40)(pt 210 122))
+		(line (pt 104 122)(pt 210 122))
+		(line (pt 104 40)(pt 104 122))
+		(circle (rect 136 64 168 96))
+	)
+)

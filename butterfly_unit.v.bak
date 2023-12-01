@@ -1,0 +1,38 @@
+module butterfly_unit(
+    //.clk(clk), //serve?
+	 //input
+	 twiddle_real, 
+	 twiddle_img, 
+	 ina_real, 
+	 ina_img, 
+	 inb_real, 
+	 inb_img, 
+	 //output
+	 outa_real, 
+	 outa_img, 
+	 outb_real, 
+	 outb_img
+);
+
+//Parameters
+
+//Ports definition
+input [15:0]twiddle_real;
+input [15:0]twiddle_img;
+input [15:0]ina_real;
+input [15:0]ina_img;
+input [15:0]inb_real;
+input [15:0]inb_img;
+output 
+
+
+//Private wires
+
+
+//Private regs
+
+//Private assignments
+
+
+
+endmodule

@@ -19,19 +19,16 @@ module I2S_master #(
 );
 
 /* Params */
-//`include "../globals.v"
-localparam CODEC_MCLK_DIV = 100;
-localparam CODEC_MCLK_FREQ_HZ = 50000000;
-localparam CODEC_FSAMPL_HZ = 48000;
+`include "../globals.v"
 
-localparam XCK_CNT_BITS = $clog2(CODEC_MCLK_DIV);  /* CODEC_MCLK_DIV is the division factor used to obtain MCLK from main clock */
-localparam XCK_CNT_TOP  = CODEC_MCLK_DIV - 1;
-localparam XCK_CNT_HALF = CODEC_MCLK_DIV / 2;
+localparam XCK_CNT_BITS = $clog2(`CODEC_MCLK_DIV);  /* CODEC_MCLK_DIV is the division factor used to obtain MCLK from main clock */
+localparam XCK_CNT_TOP  = `CODEC_MCLK_DIV - 1;
+localparam XCK_CNT_HALF = `CODEC_MCLK_DIV/2;
 
 localparam LAST_BIT = DATA_BITS-1;
 localparam BCLK_TICKS_PER_SAMPLE = LEADING_BITS + DATA_BITS + TRAILING_BITS;
 
-localparam BCLK_CNT_DIV  = CODEC_MCLK_FREQ_HZ/CODEC_FSAMPL_HZ/(BCLK_TICKS_PER_SAMPLE*2);
+localparam BCLK_CNT_DIV  = `CODEC_MCLK_FREQ_HZ/`CODEC_FSAMPL_HZ/(BCLK_TICKS_PER_SAMPLE*2);
 localparam BCLK_CNT_BITS = $clog2(BCLK_CNT_DIV);
 localparam BCLK_CNT_TOP  = BCLK_CNT_DIV - 1;
 localparam BCLK_CNT_HALF = BCLK_CNT_DIV/2;

@@ -28,8 +28,8 @@ module Spectrum_Analyser(
     // Audio CoDec physical pins
     AUD_XCK,
     AUD_BCLK,
-    AUD_DACDAT,
-    AUD_DACLRCK,
+    AUD_ADCDAT,
+    AUD_ADCLRCK,
     
     // shared I2C bus
     I2C_SCLK,
@@ -47,8 +47,8 @@ input CLOCK_50;
 
 output wire AUD_XCK;
 output wire AUD_BCLK;
-output wire AUD_DACDAT;
-output wire AUD_DACLRCK;
+output wire AUD_ADCDAT;
+output wire AUD_ADCLRCK;
 
 output wire I2C_SCLK;
 inout  wire I2C_SDAT;
@@ -79,7 +79,7 @@ wire aud_buff_filled;
 //reg key12_pressed = 0;
 
 // Internal assignments
-assign rst_n = !(`BUTTON_RST); // Reset is active low
+//assign rst_n = !(`BUTTON_RST); // Reset is active low
 
 // Status LED
 assign LEDR[3] = buffer_active_sel;
@@ -87,7 +87,7 @@ assign LEDR[2] = audio_buffer_filled;
 assign LEDR[1] = audio_buffer_empty;
 assign LEDR[0] = audio_buffer_empty_ack;
 
-/* Double buffer and RAM address translation */
+// Double buffer and RAM address translation
 assign ram_rd_addr[BUFFER_ADDR_BITS-1:0] = buff_rd_addr;
 assign ram_wr_addr[BUFFER_ADDR_BITS-1:0] = buff_wr_addr;
 assign ram_rd_addr[BUFFER_ADDR_BITS] = buff_active_sel;
@@ -98,24 +98,24 @@ MAIN_PLL main_pll(	//DA SETTARE
     .c0(clk) /* Set clk to 200 MHz */
 );
 
-CoDec_IF codec(
+Codec_interface codec(
     .clk(clk),
     .rst_n(rst_n),
     
     // Audio codec physical pins
     .codec_aud_xck_o(AUD_XCK),
     .codec_aud_bclk_o(AUD_BCLK),
-    .codec_aud_dacdat_o(AUD_DACDAT),
-    .codec_aud_daclrck_o(AUD_DACLRCK),
+    .codec_aud_adcdat_i(AUD_ADCDAT),
+    .codec_aud_adclrck_o(AUD_ADCLRCK),
     
     // shared I2C bus
     .codec_i2c_sclk_o(I2C_SCLK),
     .codec_i2c_sdat_io(I2C_SDAT),
     
     // Buffer interface
-    .codec_buffer_addr_o(buff_rd_addr),
+    .codec_buffer_addr_o(buff_wr_addr),
     .codec_buffer_sel_o(buff_active_sel),
-    .codec_buffer_data_i(ram_rd_data),
+    .codec_buffer_data_o(ram_wr_data),
     .codec_buffer_filled_i(aud_buff_filled),
     .codec_buffer_empty_o(aud_buff_empty),
     .codec_buffer_empty_ack_i(aud_buff_empty_ack),

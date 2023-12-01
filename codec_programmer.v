@@ -105,7 +105,7 @@ always begin
         7	:	DATAWORD	<=	{7'd6,9'b001101010};
         8	:	DATAWORD	<=	{7'd7,9'b000000010};
         9	:	DATAWORD	<=	{7'd8,9'b000000000};	//sampling at 48kHz from 16.288MHz clock
-        10	:	DATAWORD	<=	{7'd18,9'b000000001};
+        10	:	DATAWORD	<=	{7'd9,9'b000000001};
         default		:	DATAWORD	<=	16'h0000;  
     endcase
 end

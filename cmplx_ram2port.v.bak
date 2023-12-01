@@ -42,7 +42,7 @@ ram2port ram_real(
 	wren_a(wren),
 	wren_b(wren),
 	q_a(qreal_a),
-	q_b(qreal_b)
+	q_b(qreal_b);
 );
 ram2port ram_img(
 	address_a(address_a),
@@ -53,7 +53,5 @@ ram2port ram_img(
 	wren_a(wren),
 	wren_b(wren),
 	q_a(qimg_a),
-	q_b(qimg_b)
+	q_b(qimg_b);
 );
-
-endmodule

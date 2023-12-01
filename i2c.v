@@ -42,6 +42,7 @@ localparam CODEC_ADDRESS = 8'h35;    //CODEC address write to program registers 
 	output I2C_SCLK;
 	output READY;	
 	output ACK;
+	//si può aggiungere NACK/ERR
 //ONLY TO USE IN TESTBENCH
 	output [5:0] SD_COUNTER;
 	output SDO;
@@ -65,7 +66,7 @@ always @(posedge CLK) begin   //reset scelto sincrono
 	if (!RST_L) SD_COUNTER <= 6'b111111;
 	else begin
 		if (SD_COUNTER >= 0 && SD_COUNTER < 32) //go through normal functioning states
-			SD_COUNTER <= SD_COUNTER + 1;
+			SD_COUNTER <= SD_COUNTER + 6'd1;
 		else if (GO == 1) SD_COUNTER = 0;	    //start transfer
 		else SD_COUNTER <= 6'b100000;           //waiting idle state
 	end
@@ -117,8 +118,8 @@ case (SD_COUNTER)
 	//stop
     6'd30 : begin SDO = 1'b0; SCLK = 1'b0; end//ACK3 = I2C_SDAT; end	questo stato potrebbe essere quello in cui controllare trasferimento successivo
     6'd31 : SCLK = 1'b1; 
-    6'd32 : begin SDO = 1'b1; DONE = 1; end
-    default : begin SDO = 1'b1; SCLK = 1'b1; DONE = 1; ACK = 0; end
+    6'd32 : begin SDO = 1'b1; READY = 1; end
+    default : begin SDO = 1'b1; SCLK = 1'b1; READY = 1; ACK = 0; end
 
 endcase
 end

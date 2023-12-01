@@ -4,7 +4,7 @@
 //
 // ============================================================================
 //
-// Major Functions:I2C Finite State Machine
+// Major Functions: Codec initialization Finite State Machine
 //
 // ============================================================================
 //

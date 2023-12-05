@@ -70,7 +70,7 @@ begin
 			snext = s0;
 		else
 		begin
-			snext = CALC_FFT;
+			snext = ADDRESS_GENERATION;
 			address_a_o[9:0] = {(j_double << 1)[9-i:0], (j_double << 1)[9:9-i+1]};
 			address_b_o[9:0] = {((j_double << 1) + 1'b1)[9-i:0], ((j_double << 1)+1'b1)[9:9-i+1]};
 			twiddle_addr[8:0] += (1 << 9-i);

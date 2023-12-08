@@ -1,42 +1,44 @@
-module i2s_master #(
-    parameter LEADING_BITS  = 1,  /* Dummy bits before sample */
-    parameter DATA_BITS     = 16, /* Widht in bits of one sample */
-    parameter TRAILING_BITS = 15  /* Dummy bits after sample */
+module i2s_master.v #(
+    parameter LEADING_BITS  = 1,  // Dummy bits before sample, fixed to 1
+    parameter DATA_BITS     = 16, // Width in bits of one sample
+    parameter TRAILING_BITS = 15  // Dummy bits after sample, (at least one required)
 )(
-    clk, rst_n,
+    rst_n,
     
     // Audio codec physical pins
-    codec_aud_xck_o,
-    codec_aud_bclk_o,
+    //codec_aud_xck_o,
+    codec_aud_bclk_i,
     codec_aud_adcdat_i,
-    codec_aud_adclrck_o,
+    codec_aud_adclrck_i,
     
     // Control signals
     i2s_sample_data_L_o,
     i2s_sample_data_R_o,
-    i2s_get_i,
+    i2s_get_i,	//relativamente inutile
     i2s_done_o
 );
 
 // Params
 //`include "../globals.v"
+/*
 localparam CODEC_MCLK_DIV = 100;
 localparam CODEC_MCLK_FREQ_HZ = 50000000;
 localparam CODEC_FSAMPL_HZ = 48000;
 
-localparam XCK_CNT_BITS = $clog2(CODEC_MCLK_DIV);  /* CODEC_MCLK_DIV is the division factor used to obtain MCLK from main clock */
+localparam XCK_CNT_BITS = $clog2(CODEC_MCLK_DIV);  // CODEC_MCLK_DIV is the division factor used to obtain MCLK from main clock
 localparam XCK_CNT_TOP  = CODEC_MCLK_DIV - 1;
 localparam XCK_CNT_HALF = CODEC_MCLK_DIV / 2;
-
-localparam LAST_BIT = DATA_BITS-1;
-localparam BCLK_TICKS_PER_SAMPLE = LEADING_BITS + DATA_BITS + TRAILING_BITS;
-
+*/
+//localparam LAST_BIT = DATA_BITS-1;
+//localparam BCLK_TICKS_PER_SAMPLE = LEADING_BITS + DATA_BITS + TRAILING_BITS;
+/*
 localparam BCLK_CNT_DIV  = CODEC_MCLK_FREQ_HZ/CODEC_FSAMPL_HZ/(BCLK_TICKS_PER_SAMPLE*2);
 localparam BCLK_CNT_BITS = $clog2(BCLK_CNT_DIV);
 localparam BCLK_CNT_TOP  = BCLK_CNT_DIV - 1;
 localparam BCLK_CNT_HALF = BCLK_CNT_DIV/2;
-
-localparam BCLK_TICKS_BITS = $clog2(BCLK_TICKS_PER_SAMPLE); /* Number of BCLK cycles to transmit 1 sample (left or right channel) */
+*/
+//localparam BCLK_TICKS_BITS = $clog2(BCLK_TICKS_PER_SAMPLE); // Number of BCLK cycles to transmit 1 sample (left or right channel)
+localparam DATA_BITS_CNTR = $clog2(DATA_BITS); // Number of BCLK cycles to transmit 1 sample (left or right channel)
 
 localparam FSM_IDLE   = 0;
 localparam FSM_GET   = 1;
@@ -44,49 +46,60 @@ localparam FSM_STATES = 2;
 localparam FSM_STATE_BITS = $clog2(FSM_STATES);
 
 // Ports definition
-input clk;
+//input bclk;
 input rst_n;
 
-output reg codec_aud_xck_o;
-output reg codec_aud_bclk_o;
-input wire codec_aud_adcdat_i;
-output reg codec_aud_adclrck_o;
+//output codec_aud_xck_o;
+input codec_aud_bclk_i;
+input codec_aud_adcdat_i;
+input codec_aud_adclrck_i;
 
-output [DATA_BITS-1:0] i2s_sample_data_L_o;
-output [DATA_BITS-1:0] i2s_sample_data_R_o;
+output reg [DATA_BITS-1:0] i2s_sample_data_L_o;
+output reg [DATA_BITS-1:0] i2s_sample_data_R_o;
 input i2s_get_i;
-output wire i2s_done_o;
+output i2s_done_o;
 
 // Private regs
-reg [XCK_CNT_BITS-1:0]    xck_counter = 0;
-reg [BCLK_CNT_BITS-1:0]   bclk_counter = 0;
-reg [BCLK_TICKS_BITS-1:0] bclk_ticks = 0;
-reg [BCLK_TICKS_BITS-1:0] data_bit = 0;
-reg [DATA_BITS-1:0] sample_L = 0;
-reg [DATA_BITS-1:0] sample_R = 0; 
+//reg [XCK_CNT_BITS-1:0]    xck_counter = 0;
+//reg [BCLK_CNT_BITS-1:0]   bclk_counter = 0;
+//reg [BCLK_TICKS_BITS-1:0] bclk_ticks = 0;
+reg [DATA_BITS_CNTR-1:0] data_bit;
+//reg [DATA_BITS-1:0] sample_L = 0;
+//reg [DATA_BITS-1:0] sample_R = 0; 
 
 reg [FSM_STATE_BITS-1:0] fsm_state = 0;
 
+//reg synch = 0;	//POTREBBE ESSERE CHANNEL RIGHT PER ORA
+reg ch_right;
+reg sample_L_done;
+reg sample_R_done;
+//reg dummy_trail_cnt; // =0
+
 // Private wires
-wire [DATA_BITS-1:0] sample;
-wire end_of_sample;
-wire i2s_idle;
+//wire [DATA_BITS-1:0] sample;
+//wire end_of_sample;
+//wire i2s_idle;
+
+//wire done;
 
 
-assign i2s_sample_data_L_o = 0;
-assign i2s_sample_data_R_o = 0;
+//assign i2s_sample_data_L_o = 0;
+//assign i2s_sample_data_R_o = 0;
 
 
 // Private assignments
-assign i2s_idle = fsm_state == FSM_IDLE;
+//assign i2s_idle = fsm_state == FSM_IDLE;
+/*
 assign i2s_done_o = (codec_aud_adclrck_o & end_of_sample) | i2s_idle;
 //assign sample = (codec_aud_adclrck_o) ? sample_L : sample_R;
 //assign codec_aud_adcdat_i = sample[data_bit];
 assign end_of_sample = (bclk_ticks == (BCLK_TICKS_PER_SAMPLE-1))
                         && (bclk_counter == BCLK_CNT_TOP)
                         && (xck_counter == XCK_CNT_TOP);
+*/	
+assign i2s_done_o = sample_L_done & sample_R_done;
 
-// XCK and BCK clock generation
+/* XCK and BCK clock generation
 always @ (posedge clk) begin
     if(!rst_n) begin
         xck_counter <= 0;
@@ -117,9 +130,56 @@ always @ (bclk_ticks) begin
     else
         data_bit <= 0;
 end
-                        
+*/     
 // Main FSM
-always @ (posedge clk) begin
+always @ (posedge codec_aud_bclk_i) begin
+	//ch_right <= 0;
+	if (i2s_done_o) begin	//clear condition: previous sample has been sent to buffer
+		sample_L_done <= 1'b0;
+		sample_R_done <= 1'b0;
+	end
+	if (!rst_n | !i2s_get_i) begin	//rst or inactive condition
+		fsm_state <= FSM_IDLE;
+		ch_right <= 1'b0;
+		//synch <= 1'b0;
+	end else begin
+		ch_right <= codec_aud_adclrck_i;	//può anche essere scritto più esternamente
+		case(fsm_state)
+			FSM_IDLE: begin
+				/*if (codec_aud_adclrck_i == 1'b1) begin //eliminabile
+					synch <= 1'b1;
+					fsm_state <= FSM_IDLE;
+				end else*/ if ((ch_right == 1'b1) && (codec_aud_adclrck_i == 1'b0)) begin	//dummy bit for left channel
+					//ch_right <= 0;
+					data_bit <= DATA_BITS - 1;
+					fsm_state <= FSM_GET;
+				end else begin
+					fsm_state <= FSM_IDLE;
+				end
+			end
+			FSM_GET: begin
+				fsm_state <= FSM_GET;
+				if (!codec_aud_adclrck_i & !ch_right & !sample_L_done) begin
+					i2s_sample_data_L_o[data_bit] <= codec_aud_adcdat_i;
+					data_bit <= data_bit - 1;
+					if (data_bit == 0) sample_L_done <= 1'b1;
+					//dummy_trail_cnt <= dummy_trail_cnt + 1;
+				end if (ch_right ^ codec_aud_adclrck_i) begin	//other channel start condition (dummy bit detected)
+					data_bit <= DATA_BITS - 1;
+				end if (codec_aud_adclrck_i & ch_right & !sample_R_done) begin
+					i2s_sample_data_R_o[data_bit] <= codec_aud_adcdat_i;
+					data_bit <= data_bit - 1;
+					if (data_bit == 0) sample_R_done <= 1'b1;
+					//eventuale gestione caso dummy trail count e introduzione stato di errore
+				end
+			end
+		endcase
+	end
+end
+
+/*              
+// Main FSM
+always @ (posedge codec_aud_bclk_i) begin
     if(!rst_n) begin
         fsm_state <= FSM_IDLE;
         codec_aud_adclrck_o <= 0;
@@ -146,6 +206,6 @@ always @ (posedge clk) begin
         end
     endcase
 end
-
+*/
 
 endmodule

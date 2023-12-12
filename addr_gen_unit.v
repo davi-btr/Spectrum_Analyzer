@@ -30,10 +30,10 @@ reg [9:0]address_a_reg;
 reg [9:0]address_b_reg;
 reg [8:0]twiddle_addr_reg = 9'b0;
 reg memsel_reg;
-reg sreg = s0;
-reg snext;
-reg jnext;
-reg inext;
+reg [2:0] sreg = s0;
+reg [2:0] snext;
+reg [8:0] jnext;
+reg [3:0] inext;
 reg [8:0] j = 9'b0;
 reg [3:0] i = 4'b0;
 

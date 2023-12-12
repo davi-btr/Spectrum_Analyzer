@@ -9,7 +9,7 @@ module addr_gen_unit(
 );
 
 //Parameters
-localparam s0 = 2'b00, ADDRESS_GENERATION = 2'b01, WAIT = 2b'10;
+localparam s0 = 2'b00, ADDRESS_GENERATION = 2'b01, WAIT = 2'b10;
 
 //Ports definition
 input clk;
@@ -99,8 +99,8 @@ begin
 			address_b_reg = 0;
 			memsel_reg = 0;
 			twiddle_addr_reg = 0;  
-			if(i == 4'd9) snext = s0;
-			else snext = WAIT;
+			//if(i == 4'd9) snext = s0;
+			snext = WAIT;
 		end
 		else
 		begin
@@ -163,20 +163,35 @@ begin
 		twiddle_addr_reg = 0; 
 		if(j == 9'd3)
 		begin
+			jnext = 9'd0;
+			if(i == 4'd9) begin
+				snext = s0;
+				inext = i + 1'b1;
+			end
+			else
+			begin
 			snext = ADDRESS_GENERATION;
 			inext = i + 1'b1;
-			jnext = 9'd0;
+			end
 		end
 		else 
 		begin
 			snext = WAIT;
-			jnext = j + 1b'1;
+			jnext = j + 1'b1;
 			inext = i;
 		end
 	end
 	
-	default: 
+	default:
+	begin
 		snext = s0;
+		address_a_reg = 0;
+		address_b_reg = 0;
+		memsel_reg = 0;
+		twiddle_addr_reg = 0;
+		jnext = 0;
+		inext = 0;		
+	end
 	endcase 
 end
 

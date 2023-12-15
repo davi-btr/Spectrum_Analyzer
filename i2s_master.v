@@ -1,4 +1,4 @@
-module i2s_master.v #(
+module i2s_master #(
     parameter LEADING_BITS  = 1,  // Dummy bits before sample, fixed to 1
     parameter DATA_BITS     = 16, // Width in bits of one sample
     parameter TRAILING_BITS = 15  // Dummy bits after sample, (at least one required)

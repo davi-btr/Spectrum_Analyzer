@@ -2,8 +2,8 @@ module cmplx_ram2port(
     clk,
     
     // inputs
-    address_a,
-    address_b,
+    address_a_in,
+    address_b_in,
 	 dreal_a,
 	 dimg_a,
 	 dreal_b,
@@ -20,8 +20,8 @@ module cmplx_ram2port(
 
 // Ports definition
 input clk;
-input [9:0]address_a;
-input [9:0]address_b;
+input [9:0]address_a_in;
+input [9:0]address_b_in;
 input [31:0]dreal_a;
 input [31:0]dimg_a;
 input [31:0]dreal_b;
@@ -34,8 +34,8 @@ output [31:0]qimg_b;
 
 // Private instances
 ram2port ram_real(
-	address_a(address_a),
-	address_b(add),
+	address_a(address_a_in),
+	address_b(address_b_in),
 	clock(clk),
 	data_a(dreal_a),
 	data_b(dreal_b),
@@ -45,8 +45,8 @@ ram2port ram_real(
 	q_b(qreal_b)
 );
 ram2port ram_img(
-	address_a(address_a),
-	address_b(address_b),
+	address_a(address_a_in),
+	address_b(address_b_in),
 	clock(clk),
 	data_a(dimg_a),
 	data_b(dimg_b),

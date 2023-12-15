@@ -1,6 +1,6 @@
 module codec_init (
-    clk_i,
-    rst_n_i,
+    clk,
+    rst_n,
     i2c_sclk_o,
     i2c_sdat_io
 );
@@ -25,8 +25,8 @@ localparam CMD_NUM	    =	11;
 localparam VOL = 7'd120;
 
 // Ports definition
-input  clk_i;
-input  rst_n_i;
+input  clk;
+input  rst_n;
 output i2c_sclk_o;
 inout  i2c_sdat_io;
 
@@ -45,7 +45,7 @@ wire mI2C_ACK;
 
 i2c mI2C ( 	
     .CLK(i2c_slowclk),
-    .RST_L(rst_n_i),
+    .RST_L(rst_n),
         
     .GO(i2c_go),
     .READY(mI2C_END),
@@ -57,9 +57,9 @@ i2c mI2C (
 );
 
 // I2C Control Clock
-always@(posedge clk_i)
+always@(posedge clk)
 begin
-    if(!rst_n_i)
+    if(!rst_n)
     begin
         i2c_slowclk	<=	0;
         fr_div_cnt	<=	0;
@@ -76,8 +76,8 @@ begin
 end
 
 // Main FSM to send ordered commands
-always@(posedge i2c_slowclk or negedge rst_n_i) begin
-    if(!rst_n_i) begin
+always@(posedge i2c_slowclk or negedge rst_n) begin
+    if(!rst_n) begin
         CMD	<=	0;
         codec_init_fsm_state	<=	0;
         i2c_go		<=	0;

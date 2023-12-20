@@ -95,7 +95,9 @@ begin
 		twiddle_addr_reg = 0;
 		jnext = 0;
 		inext = 0;
+		k = 0;
 		loading_reg = 1'b0;
+		read_address_buffer_reg = 0;
 		if(start_i) snext = LOAD;
 		else snext = s0;
 	end
@@ -105,7 +107,7 @@ begin
 		if(read_address_buffer_o == 10'd1023) snext = WAIT;
 		else snext = LOAD;
 		loading_reg = 1'b1;
-		read_address_buffer_reg = read_address_buffer_o + 1;
+		read_address_buffer_reg = read_address_buffer_o + 1'b1;
 		memsel_reg = 1'b1;
 		for(k = 0; k < 10; k = k+1) address_a_reg[k] = read_address_buffer_o[9-k]; //bit reversal operation
 																										   //address_a_o dovrà essere rotardato di 2 cicli di ck per la latenza del buffer
@@ -117,9 +119,11 @@ begin
 	
 	ADDRESS_GENERATION : 
 	begin
+		read_address_buffer_reg = 0;
 		loading_reg = 1'b0;
 		jnext = j + 1'b1;
 		inext = i;
+		k = 0;
 		memsel_reg = i[0];
 		if(j == 9'd511) 
 		begin
@@ -185,6 +189,8 @@ begin
 	
 	WAIT : 
 	begin
+		k = 0;
+		read_address_buffer_reg = 0;
 		if(loading_o) memsel_reg = 1'b1;
 		else memsel_reg = i[0];
 		address_a_reg = 0;
@@ -211,11 +217,14 @@ begin
 			snext = WAIT;
 			jnext = j + 1'b1;
 			inext = i;
+			loading_reg = loading_o;
 		end
 	end
 	
 	default:
 	begin
+		k = 0;
+		read_address_buffer_reg = 0;
 		snext = s0;
 		address_a_reg = 0;
 		address_b_reg = 0;
@@ -223,6 +232,7 @@ begin
 		twiddle_addr_reg = 0;
 		jnext = 0;
 		inext = 0;		
+		loading_reg = 0;
 	end
 	endcase 
 end

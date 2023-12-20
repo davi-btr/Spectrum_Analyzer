@@ -83,9 +83,9 @@ module rom1port_real (
 		altsyncram_component.clock_enable_input_a = "BYPASS",
 		altsyncram_component.clock_enable_output_a = "BYPASS",
 `ifdef NO_PLI
-		altsyncram_component.init_file = "/twiddle_coefficients_real.rif"
+		altsyncram_component.init_file = "/twiddle_factors_real.mif"
 `else
-		altsyncram_component.init_file = "/twiddle_coefficients_real.hex"
+		altsyncram_component.init_file = "/twiddle_factors_real.mif"
 `endif
 ,
 		altsyncram_component.intended_device_family = "Cyclone II",

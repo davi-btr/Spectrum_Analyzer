@@ -6,7 +6,7 @@ module FFT_block(
     address_o,
     
     // control signals
-    start_i,
+    start_i
     //end_o, per ora non serve
 );
 
@@ -20,7 +20,7 @@ localparam s0 = 3'b000, CALC_FFT = 3'b10;
 input clk;
 input rst_n;
 
-input [31:0] data_i;
+input [15:0] data_i;
 output [9:0] address_o;
 
 //output end_o;
@@ -63,11 +63,11 @@ wire loading;
 
 // Private regs
 //reg i2s_get = 0;
-//reg [DAC_BITS-1:0] data_R = 0;
+/*reg [DAC_BITS-1:0] data_R = 0;
 reg [2:0]sreg = CALC_FFT;
 reg [2:0]snext;
 reg [8:0]j = 9'b0; //le coppie sono metà dei campioni, quindi bastano 9 bit
-reg [3:0]i = 3'b0;
+reg [3:0]i = 3'b0;*/
 
 
 // Private assignments
@@ -79,9 +79,9 @@ assign mem1_address_a = memsel ? pipe_address_a : address_a;
 assign mem1_address_b = memsel ? pipe_address_b : address_b;
 assign mem2_address_a = memsel ? address_a : pipe_address_a;
 assign mem2_address_b = memsel ? address_b : pipe_address_b;
-assign anext_real = loading ? data_i : anext_real_bfu;
+assign anext_real = loading ? $signed(data_i) : anext_real_bfu;
 assign anext_img = loading ? 0 : anext_img_bfu;
-assign bnext_real = loading ? data_i : bnext_real_bfu;
+assign bnext_real = loading ? $signed(data_i) : bnext_real_bfu;
 assign bnext_img = loading ? 0 : bnext_img_bfu;
 
 // Private instances
@@ -122,9 +122,9 @@ twiddle_fact twiddle(
 );
 
 cmplx_ram2port ram1(
-	.address_a(mem1_address_a),
-	.address_b(mem1_address_b),
-	.clock(clk),
+	.address_a_in(mem1_address_a),
+	.address_b_in(mem1_address_b),
+	.clk(clk),
 	.dreal_a(anext_real),
 	.dimg_a(anext_img),
 	.dreal_b(bnext_real),
@@ -137,9 +137,9 @@ cmplx_ram2port ram1(
 );
 
 cmplx_ram2port ram2(
-	.address_a(mem2_address_a),
-	.address_b(mem2_address_b),
-	.clock(clk),
+	.address_a_in(mem2_address_a),
+	.address_b_in(mem2_address_b),
+	.clk(clk),
 	.dreal_a(anext_real),
 	.dimg_a(anext_img),
 	.dreal_b(bnext_real),

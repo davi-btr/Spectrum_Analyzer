@@ -40,15 +40,15 @@ module Spectrum_Analyser(
 input CLOCK_50;
 
 //input [3:0] KEY;
-input [17:0] SW;
+input [1:0] SW;
 //input SD_DO;
 //output [17:0] LEDR;
 //output [7:0] LEDG;
 
 output wire AUD_XCK;
-output wire AUD_BCLK;
-output wire AUD_ADCDAT;
-output wire AUD_ADCLRCK;
+input wire AUD_BCLK;
+input wire AUD_ADCDAT;
+input wire AUD_ADCLRCK;
 
 output wire I2C_SCLK;
 inout  wire I2C_SDAT;
@@ -58,7 +58,7 @@ inout  wire I2C_SDAT;
 
 // Internal wires
 wire clk;
-wire rst_n; 
+//wire rst_n; 
 /*
 wire ram_wren;
 wire [7:0] ram_wr_data;
@@ -75,10 +75,12 @@ wire [9:0] buff_rd_addr;
 // Internal regs
 //reg key0_pressed = 0;
 //reg key12_pressed = 0;
+reg rst_n;
+reg rstn_synch;
 
 // Internal assignments
 assign clk = CLOCK_50;
-assign rst_n = SW[1]; // SI PUO' USARE UN BOTTONE
+//assign rst_n = SW[1]; // SI PUO' USARE UN BOTTONE
 
 /* Status LED
 assign LEDR[3] = buffer_active_sel;
@@ -93,6 +95,12 @@ assign ram_rd_addr[BUFFER_ADDR_BITS] = buff_active_sel;
 assign ram_wr_addr[BUFFER_ADDR_BITS] = !buff_active_sel;
 */
 assign right_channel = SW[0];
+
+// Synch rstn input
+always @ (posedge CLOCK_50) begin
+	rstn_synch <= SW[1];
+	rst_n <= rstn_synch;
+end
 
 Codec_interface codec(
     .clk(clk),
@@ -119,11 +127,11 @@ FFT_block FFT_calc (
     .clk(clk),
     .rst_n(rst_n),
     //SEGNALI PER FFT BLOCK
-	 .start(),
-	 .done(),
+	 .start_i(fft_start),
+	 //.done(),
 	 //interfaccia buffer
-	 .address(),
-	 .q()
+	 .address_o(buff_rd_addr),
+	 .data_i(buff_rd_data)
 	 //...
 
 );

@@ -64,11 +64,9 @@ input chann_sel_i;
 input data_ready_i;
 
 // Private regs
-reg [9:0] w_addr = 0;	//initial
+reg [9:0] w_addr; // = 0; initial
 reg buffer_select;
-//reg req_sampled;
-//reg [9:0]data_sampled;
-//reg [9:0] buff_top_in;
+reg start_asynch;
 reg start_synch;
 //reg [9:0]buff_top;
 reg ch_sel;
@@ -103,18 +101,18 @@ always @ (posedge bclk) begin
     if (!rst_n) begin
 		w_addr <= 9'b0;
 		buffer_select <= 1'b0;
-		start_synch <= 1'b0;
+		start_asynch <= 1'b0;
 	 end else if (data_ready_i) begin
       w_addr <= w_addr + 9'b1;
 		if (sel_flip) begin
 			buffer_select <= !buffer_select;
-			start_synch <= 1'b1;
+			start_asynch <= 1'b1;
 		end
 		  //top, bottom, altre info eventuali da aggiungere ai dati
     end else begin
 		w_addr <= w_addr;
 		buffer_select <= buffer_select;
-		start_synch <= 1'b0;
+		start_asynch <= 1'b0;
 	 end
 end
 
@@ -159,6 +157,7 @@ always @ (posedge mclk) begin
 		//buff_top_in <= 9'b0;
 		//buff_top <= 9'b0;
 		buffer_start_o <= 0;
+		start_synch <= 0;
 	end else begin /*
 		if (req_through) begin
 			buff_top_in <= data_sampled;
@@ -168,6 +167,7 @@ always @ (posedge mclk) begin
 		end
 		top_valid <= req_through;*/
 		buffer_start_o <= start_synch;
+		start_synch <= start_asynch;
 	end
 end
 /* Double clocking on mclk

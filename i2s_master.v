@@ -41,7 +41,7 @@ input codec_aud_adclrck_i;
 output reg [DATA_BITS-1:0] i2s_sample_data_L_o;
 output reg [DATA_BITS-1:0] i2s_sample_data_R_o;
 input i2s_get_i;
-output i2s_done_o;
+output reg i2s_done_o;
 
 // Private regs
 //reg [XCK_CNT_BITS-1:0]    xck_counter = 0;
@@ -58,6 +58,8 @@ reg ch_right;
 reg sample_L_done;
 reg sample_R_done;
 //reg dummy_trail_cnt; // =0
+reg get_synch;
+reg get;
 
 // Private wires
 //wire [DATA_BITS-1:0] sample;
@@ -81,7 +83,7 @@ assign end_of_sample = (bclk_ticks == (BCLK_TICKS_PER_SAMPLE-1))
                         && (bclk_counter == BCLK_CNT_TOP)
                         && (xck_counter == XCK_CNT_TOP);
 */	
-assign i2s_done_o = sample_L_done & sample_R_done;
+//assign i2s_done_o = sample_L_done & sample_R_done;
 
 /* XCK and BCK clock generation
 always @ (posedge clk) begin
@@ -114,15 +116,28 @@ always @ (bclk_ticks) begin
     else
         data_bit <= 0;
 end
-*/     
+*/    
+// Synch get input
+always @ (posedge codec_aud_bclk_i) begin
+	  if (!rst_n) begin
+			 get_synch <= 0;
+			 get <= 0;
+	  end else begin
+			 get_synch <= i2s_get_i;
+			 get <= get_synch;
+	  end
+end
+
+ 
 // Main FSM
 always @ (posedge codec_aud_bclk_i) begin
-	//ch_right <= 0;
+	/*ch_right <= 0;
 	if (i2s_done_o) begin	//clear condition: previous sample has been sent to buffer
 		sample_L_done <= 1'b0;
 		sample_R_done <= 1'b0;
-	end
-	if (!rst_n | !i2s_get_i) begin	//rst or inactive condition
+	end*/
+	i2s_done_o <= 1'b0;
+	if (!rst_n | !get) begin	//rst or inactive condition
 		fsm_state <= FSM_IDLE;
 		ch_right <= 1'b0;
 		//synch <= 1'b0;
@@ -150,6 +165,11 @@ always @ (posedge codec_aud_bclk_i) begin
 					//dummy_trail_cnt <= dummy_trail_cnt + 1;
 				end if (ch_right ^ codec_aud_adclrck_i) begin	//other channel start condition (dummy bit detected)
 					data_bit <= 4'd15;
+					if (sample_L_done & sample_R_done) begin
+							sample_L_done <= 1'b0;
+							sample_R_done <= 1'b0;
+							i2s_done_o <= 1'b1;
+               end
 				end if (codec_aud_adclrck_i & ch_right & !sample_R_done) begin
 					i2s_sample_data_R_o[data_bit] <= codec_aud_adcdat_i;
 					data_bit <= data_bit - 1'b1;

@@ -2,12 +2,13 @@ module codec_init (
     clk,
     rst_n,
     i2c_sclk_o,
-    i2c_sdat_io
+    i2c_sdat_io,
+	 init_done_o
 );
 
 // Params
 localparam CLK_Freq = 50 * 1000 * 1000;	//ex. 50MHz
-localparam I2C_Freq = 300 * 1000;			//ex. 300kHz
+localparam I2C_Freq = 250 * 1000;			//ex. 250kHz
 
 // Commands list
 localparam Dummy_DATA	=	0;
@@ -29,6 +30,7 @@ input  clk;
 input  rst_n;
 output i2c_sclk_o;
 inout  i2c_sdat_io;
+output reg init_done_o;
 
 // Internal regs
 reg	[15:0]	fr_div_cnt;
@@ -53,56 +55,67 @@ i2c mI2C (
     .I2C_DATA(i2c_data),
     
     .I2C_SCLK(i2c_sclk_o),
-    .I2C_SDAT(i2c_sdat_io)
+    .I2C_SDAT(i2c_sdat_io),
+	 
+	 .SD_COUNTER(),
+	 .SDO()
 );
 
 // I2C Control Clock
 always@(posedge clk)
-begin
+begin /*
     if(!rst_n)
     begin
         i2c_slowclk	<=	0;
         fr_div_cnt	<=	0;
     end
     else
-    begin
-        if( fr_div_cnt < 8 )	//(CLK_Freq/I2C_Freq)
+    begin*/
+        if( fr_div_cnt < CLK_Freq / (2*I2C_Freq) - 1)	//per avere clock a I2C_freq
             fr_div_cnt <= fr_div_cnt+16'd1;
         else begin
             fr_div_cnt  <= 0;
             i2c_slowclk <= ~i2c_slowclk;
         end
-    end
+    /*end*/
 end
 
 // Main FSM to send ordered commands
-always@(posedge i2c_slowclk or negedge rst_n) begin
+always@(posedge i2c_slowclk /*or negedge rst_n*/) begin
     if(!rst_n) begin
         CMD	<=	0;
+		  init_done_o <= 0;
         codec_init_fsm_state	<=	0;
         i2c_go		<=	0;
     end else begin
-        if(CMD<CMD_NUM)
+        if(CMD<CMD_NUM) begin
+				init_done_o <= 0;
             case(codec_init_fsm_state)
                 0:	begin
                     i2c_data	<=	DATAWORD;
                     i2c_go		<=	1;
-                    codec_init_fsm_state	<=	1;
+                    codec_init_fsm_state	<=	0;
+						  if (mI2C_ACK) begin
+								i2c_go <= 0;
+								codec_init_fsm_state <= 1;
+						  end
                 end
                 1:	begin
-                    if(mI2C_END) begin
-                        if(!mI2C_ACK)
-                            codec_init_fsm_state	<=	2;
-                        else
-                            codec_init_fsm_state	<=	0;							
-                        i2c_go		<=	0;
-                    end
+							//i2c_go <= 0;
+                    if (mI2C_END) begin
+							codec_init_fsm_state	<=	2;
+                    end else begin
+                     codec_init_fsm_state	<=	1;		
+						  end
                 end
                 2:	begin
                     CMD	<=	CMD+4'd1;
                     codec_init_fsm_state	<=	0;
                 end
             endcase
+			end else begin
+				init_done_o <= 1;
+			end
     end
 end
 

@@ -44,20 +44,20 @@ buffer buffer1(
 	.data(buff_wdata_i),
 	.rdaddress(buff_raddr_i),
 	.rdclock(clk2),
-	.rden(!buff_sel_i),
+	.rden(buff_sel_i),
 	.wraddress(buff_waddr_i),
 	.wrclock(clk1),
-	.wren(buff_sel_i),
+	.wren(!buff_sel_i),
 	.q(buffer_rdata1)
 );
 buffer buffer2(
 	.data(buff_wdata_i),
 	.rdaddress(buff_raddr_i),
 	.rdclock(clk2),
-	.rden(buff_sel_i),
+	.rden(!buff_sel_i),
 	.wraddress(buff_waddr_i),
 	.wrclock(clk1),
-	.wren(!buff_sel_i),
+	.wren(buff_sel_i),
 	.q(buffer_rdata2)
 );
 

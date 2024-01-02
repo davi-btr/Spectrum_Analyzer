@@ -79,7 +79,7 @@ else
 case (SD_COUNTER)
 	6'd0  : begin READY = 0; SDO = 1; SCLK = 1; ACK = 1; end
 	//start
-	6'd1  : begin SD = I2C_DATA; SDO = 0; ACK <= 0; end
+	6'd1  : begin SD = I2C_DATA; SDO = 0; ACK = 0; end
 	6'd2  : SCLK = 0;
 	//SLAVE ADDR
 	6'd3  : SDO = CODEC_ADDRESS[7];
@@ -119,6 +119,7 @@ case (SD_COUNTER)
     6'd30 : begin SDO = 1'b0; SCLK = 1'b0; end//ACK3 = I2C_SDAT; end	questo stato potrebbe essere quello in cui controllare trasferimento successivo
     6'd31 : SCLK = 1'b1; 
     6'd32 : begin SDO = 1'b1; READY = 1; end
+    6'b111111 : begin SDO = 1'b1; SCLK = 1'b1; READY = 0; ACK = 0; end //rst
     default : begin SDO = 1'b1; SCLK = 1'b1; READY = 1; ACK = 0; end
 
 endcase

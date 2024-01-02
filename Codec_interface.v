@@ -71,27 +71,34 @@ wire i2s_done;
 //reg [2:0] sample_cnt = 0;
 //reg [FSM_STATE_BITS-1:0] fsm_state = 0;
 //reg [RAM_READ_WAIT_STATES_BITS-1:0] wait_states = 0;
+reg [1:0] xclk_div_cnt;
 
 // Private assignments
 //assign sample_cnt_top = (2 * wav_info_audio_channels_i) - 1;
 //assign buff_is_over = codec_buff_addr_o == (BUFFER_SIZE_BYTES-1);
 //assign swap_buffers   = buff_is_over && codec_buff_filled_i;
-assign i2s_get = 1'b1;	//decidere come usarlo
+//assign i2s_get = 1'b1;	//decidere come usarlo
 assign bclk = codec_aud_bclk_i;
-assign codec_aud_xck_o = xclk;
+assign codec_aud_xck_o = xclk_div_cnt[1];	//xclk
+
+// Codec clock generation (no PLL)
+always @(posedge clk) begin
+	xclk_div_cnt <= xclk_div_cnt + 2'd1;
+end
 
 // Private instances
 codec_init config_FSM(
     .clk(clk),
     .rst_n(rst_n),
     .i2c_sclk_o(codec_i2c_sclk_o),
-    .i2c_sdat_io(codec_i2c_sdat_io)
+    .i2c_sdat_io(codec_i2c_sdat_io),
+	 .init_done_o(i2s_get)
 );
-
+/*
 CODEC_PLL xclk_pll(	//DA SETTARE
     .inclk0(clk),
-    .c0(xclk) /* Set clk to 200 MHz */
-);
+    .c0(xclk) // Set clk to 200 MHz
+);*/
 
 i2s_master #(
     .LEADING_BITS(1),

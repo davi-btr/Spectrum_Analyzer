@@ -1,0 +1,29 @@
+magn_calc sample1_magn (
+	.sample_real(fft_sample1_real_w),
+	.sample_img(fft_sample1_img_w),
+	.sample_magn(fft_sample1_magn_w)
+);
+
+magn_calc sample2_magn (
+	.sample_real(fft_sample2_real_w),
+	.sample_img(fft_sample2_img_w),
+	.sample_magn(fft_sample2_magn_w)
+);
+
+
+ram2port64 vga_buffer(
+	.address_a(write_vga_buffer_address1_w),
+	.address_b(write_vga_buffer_address2_w),
+	.clock(clk),
+	.data_a(fft_sample1_magn_w),
+	.data_b(fft_sample2_magn_w),
+	.wren_a(fft_done_w),
+	.wren_b(fft_done_w),
+	.q_a(fft_sample1_magn_o),
+	.q_b(fft_sample2_magn_o)
+);
+
+vga_adapter vga_adpt (
+	.fft_done_i(fft_done_w)
+
+);

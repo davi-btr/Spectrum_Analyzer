@@ -1,0 +1,9 @@
+module twiddle_fact(
+	clk,
+	twiddle_addr,
+	twiddle_real_out,
+	twiddle_img_out
+);
+
+
+endmodule

@@ -1,0 +1,106 @@
+
+`timescale 1ns/1ps
+
+module tb ;
+
+reg clk = 1'b0;
+reg[15:0] data_i;
+reg start_i;
+reg rst_n;
+
+wire[9:0] add_o;
+/*
+wire fft_done_o;
+wire[3:0] write_vga_buffer_address1_o;
+wire[3:0]write_vga_buffer_address2_o;
+wire[31:0]fft_sample1_real_o;
+wire[31:0]fft_sample1_img_o;
+wire[31:0]fft_sample2_real_o;
+wire[31:0]fft_sample2_img_o;
+*/
+/*
+wire[63:0]fft_sample1_magn_o;
+wire[63:0]fft_sample2_magn_o;
+*/
+/*
+wire max_found_o; //per controllare
+wire [63:0] max_value_o;
+*/
+wire [9:0] max_value_address_o;
+//wire [63:0] vga_buff_q2_o; //per evitare synt away...
+wire [15:0] adapt_buff_q1_o;
+wire [15:0] adapt_buff_q2_o;
+wire adaptation_done_o;
+
+Spectrum_Analyser Spectrum_Analyser_tb ( 
+    .CLOCK_50(clk), 
+	 .rst_n(rst_n),
+    
+    // buffer interface
+    .data_i(data_i),
+    
+    // control signals
+    .start_i(start_i),
+    //end_o, per ora non serve
+	 .read_input_buffer_address_o(add_o), //metto qui per non avere errori
+	 /*
+	 .fft_done_o(fft_done_o),
+	 .write_vga_buffer_address1_o(write_vga_buffer_address1_o),
+	 .write_vga_buffer_address2_o(write_vga_buffer_address2_o),
+	 .fft_sample1_real_o(fft_sample1_real_o),
+	 .fft_sample1_img_o(fft_sample1_img_o),
+	 .fft_sample2_real_o(fft_sample2_real_o),
+	 .fft_sample2_img_o(fft_sample2_img_o)
+	 */
+	 /*
+	 .fft_sample1_magn_o(fft_sample1_magn_o), //messo qui per vedere che funzioni correttamente
+	 .fft_sample2_magn_o(fft_sample2_magn_o) //messo qui per vedere che funzioni correttamente
+	 */
+	 /*
+	 .max_found_o(max_found_o), //per controllare
+	 .max_value_o(max_value_o),
+	 */
+	 .max_value_address_o(max_value_address_o),
+	 //.vga_buff_q2_o(vga_buff_q2_o)
+	 .adapt_buff_q1_o(adapt_buff_q1_o),
+	 .adapt_buff_q2_o(adapt_buff_q2_o),
+	 .adaptation_done_o(adaptation_done_o)
+);
+
+
+//generazione del clock
+always
+begin
+	#5 clk = ~clk;
+end
+
+initial
+begin
+	rst_n = 1'b0;
+	start_i = 1'b0;
+	#10 ;
+	rst_n = 1'b1;
+	start_i = 1'b1;
+	#100
+	start_i = 1'b0;
+	#99890 ;
+end
+
+initial
+begin
+	data_i = 16'd0;
+	#40
+	repeat(1023)
+	begin
+		#10 data_i = data_i + 1'b1;
+	end
+	#89730 ; 
+end
+
+initial
+begin
+	#100000 $stop;
+end
+
+
+endmodule

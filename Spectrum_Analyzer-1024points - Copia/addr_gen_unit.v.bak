@@ -1,0 +1,8 @@
+addr_gen_unit(
+    clk,
+    rst_n,
+    address_a_o,
+    address_b_o,
+	 memsel_o,
+	 twiddle_addr
+);

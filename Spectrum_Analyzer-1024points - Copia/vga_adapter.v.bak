@@ -1,0 +1,60 @@
+module vga_adapter (
+	clk,
+	fft_done_i,
+	read_vga_buff_add1,
+	read_vga_buff_add1,
+	vga_buffer_data_i,
+	finding_max_o
+)
+
+
+input clk;
+input fft_done_i;
+
+output reg finding_max_o = 1'b0;
+
+localparam s0 = 2'b00, FIND_MAX = 2'b01, LOAD_OUTPUT_BUFFER = 2'b10;
+
+reg vga_adapter_start = 1'b0;
+reg [63:0] max_value_next = 64'b0;
+reg [3:0] max_value_address_next = 4'b0;
+reg [63:0] max_value = 64'b0;
+reg [3:0] max_value_address = 4'b0;
+reg [2:0] j = 3'b0;
+reg [2:0] jnext = 3'b0;
+reg sreg = s0;
+reg snext = s0;
+
+
+//è legale?
+always @ (negedge fft_done_i) 
+	vga_adapter_start <= 1'b1;
+	
+	
+//aggiornamento uscite e stato
+always @ (posedge clk)
+begin
+	j <= jnext;
+	sreg <= snext;
+	max_value <= max_value_next;
+	max_value_address <= max_value_address_next;
+end
+
+always @ (sreg or vga_adapter_start or j)
+begin
+	case(sreg)
+		s0 : begin
+			max_value_address_next = 4'b0;
+			max_value_next = 64'b0;
+			jnext = 1'b0;
+			if(vga_adapter_start) snext = FIND_MAX;
+			else snext = s0
+		end
+		
+		FIND_MAX : begin
+		
+		end
+	endcase
+end
+
+	

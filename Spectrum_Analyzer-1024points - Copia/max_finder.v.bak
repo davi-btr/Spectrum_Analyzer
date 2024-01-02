@@ -1,0 +1,118 @@
+module max_finder (
+	//input
+	clk,
+	fft_done_i,
+	vga_buffer_data_i,
+	vga_start_i,
+	//output
+	read_vga_buff_add_o, //forse avere due indirizzi complica estremamente la vita
+	//read_vga_buff_add2_o, //la lettura dallo stesso indirizzo è consentita?
+	finding_max_o,
+	max_found_o
+)
+
+
+input clk;
+input fft_done_i;
+input vga_start_i;
+input [63:0] vga_buffer_data_i,
+
+
+output reg finding_max_o = 1'b0;
+output reg [3:0] read_vga_buff_add_o = 3'b0;
+//output reg [3:0] read_vga_buff_add2_o = 3'b0;
+
+
+localparam s0 = 2'b00, FIND_MAX = 2'b01, ADAPT_OUTPUT = 2'b10, WAIT = 2'b11;
+
+
+reg[3:0] read_vga_buff_add_reg = 3'b0;
+//reg[3:0] read_vga_buff_add2_reg = 3'b0;
+reg finding_max_reg = 1'b0;
+
+
+reg [63:0] max_value_next = 64'b0;
+reg [3:0] max_value_address_next = 4'b0;
+reg [63:0] max_value = 64'b0;
+reg [3:0] max_value_address = 4'b0;
+//reg [2:0] j = 3'b0;
+//reg [2:0] jnext = 3'b0;
+reg sreg = s0;
+reg snext = s0;
+reg finding_max_p1 = 1'b0;
+reg finding_max_p2 = 1'b0;
+
+
+wire [3:0] pipe_read_vga_buff_add_w;
+	
+	
+//aggiornamento uscite e stato
+always @ (posedge clk)
+begin
+	//registri interni
+	//j <= jnext;
+	sreg <= snext;
+	max_value <= max_value_next;
+	max_value_address <= max_value_address_next;
+	//uscite
+	read_vga_buff_add_o <= read_vga_buff_add_reg;
+	//read_vga_buff_add2_o <= read_vga_buff_add2_reg;
+	finding_max_o <= finding_max_reg;
+	//pipeline di finding_max_o
+	finding_max_p1 <= finding_max_o;
+	finding_max_p2 <= finding_max_p1;
+end
+
+always @ (sreg or vga_start_i or j or read_vga_buff_add_o or finding_max_o)
+begin
+	case(sreg)
+		s0 : begin
+			read_vga_buff_add_reg = 3'b0;
+			//read_vga_buff_add2_reg = 3'b0;
+			finding_max_reg = 1'b0;
+			//jnext = 1'b0;
+			if(vga_start_i) snext = FIND_MAX;
+			else snext = s0;
+		end
+		
+		FIND_MAX : begin
+			finding_max_reg = 1'b1;
+			read_vga_buff_add_reg = read_vga_buff_add_o + 1'b1;
+			if(read_vga_buff_add_o == 4'd15) snext = 
+			else snext = FIND_MAX;
+		end
+	endcase
+end
+
+//RC che cerca il max e il suo indirizzo
+always @ (finding_max_p2 or vga_buffer_data_i or pipe_read_vga_buff_add_w)
+begin
+	if(finding_max_p2)
+	begin
+		if(vga_buffer_data_i > max_value)
+		begin
+			max_value_next = vga_buffer_data_i;
+			max_value_address_next = pipe_read_vga_buff_add_w;
+		end
+		else
+		begin
+			max_value_next = max_value;
+			max_value_address_next = max_value_address;
+		end
+	end
+	else 
+	begin
+		max_value_address_next = 4'b0;
+		max_value_next = 64'b0;
+	end
+end
+
+
+pipe2 pipe_read_vga_buff_add (
+	.in(read_vga_buff_add_o) 
+	.out(pipe_read_vga_buff_add_w), 
+	.ck(clk)
+);
+
+
+	

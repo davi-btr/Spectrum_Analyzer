@@ -1,49 +1,33 @@
-// ============================================================================
-//
-// Permission:
-//
-// ============================================================================
-//
-// Major Functions:I2C Finite State Machine
-//
-// ============================================================================
-//
-// Revision History :
-// 
-// ============================================================================
-
-// ============================================================================
-
-// TOP LEVEL ENTRY
-
 module Spectrum_Analyser(
-    CLOCK_50,
-    
-    // General purpose DE2 board features
-    //KEY,
-    SW,
-    //LEDR,
-    //LEDG,
-    
-    // Audio CoDec physical pins
+    // Audio Codec physical pins
     AUD_XCK,
     AUD_BCLK,
     AUD_ADCDAT,
     AUD_ADCLRCK,
-    
+	 
     // shared I2C bus
     I2C_SCLK,
-    I2C_SDAT
+    I2C_SDAT,
+	 
+	 // VGA interface
+	 VGA_CLK,
+	 VGA_BLANK,
+	 VGA_SYNC,
+	 VGA_HS,
+	 VGA_VS,
+	 VGA_R,
+	 VGA_G,
+	 VGA_B,
+	 
+	 //Global signals
+	 SW,
+    CLOCK_50
 );
 
-/* Ports definition */
-input CLOCK_50;
 
-//input [3:0] KEY;
+// Ports definition
+input CLOCK_50;
 input [1:0] SW;
-//input SD_DO;
-//output [17:0] LEDR;
-//output [7:0] LEDG;
 
 output wire AUD_XCK;
 input wire AUD_BCLK;
@@ -53,48 +37,43 @@ input wire AUD_ADCLRCK;
 output wire I2C_SCLK;
 inout  wire I2C_SDAT;
 
-// Parameters
+output wire VGA_CLK;
+output wire VGA_BLANK;
+output wire VGA_SYNC;
+output wire VGA_HS;
+output wire VGA_VS;
+output wire [9:0]VGA_R;
+output wire [9:0]VGA_G;
+output wire [9:0]VGA_B;
 
 
 // Internal wires
-wire clk;
-//wire rst_n; 
-/*
-wire ram_wren;
-wire [7:0] ram_wr_data;
-wire [7:0] ram_rd_data;
-wire [RAM_ADDR_BITS-1:0] ram_wr_address;
-wire [RAM_ADDR_BITS-1:0] ram_rd_address;
-*/
 wire right_channel;
-
 wire fft_start;
+wire fft_done;
 wire [15:0] buff_rd_data;
 wire [9:0] buff_rd_addr;
+wire clk;
+wire fft_done_w;
+wire [9:0] write_vga_buffer_address1_w;
+wire [9:0] write_vga_buffer_address2_w;
+wire [31:0] fft_sample1_real_w;
+wire [31:0] fft_sample1_img_w;
+wire [31:0] fft_sample2_real_w;
+wire [31:0] fft_sample2_img_w;
+wire vga_start_w;
+wire init_done_w;
+wire i2s_done_w;
 
-// Internal regs
-//reg key0_pressed = 0;
-//reg key12_pressed = 0;
+
+// Internal registers
 reg rst_n;
 reg rstn_synch;
 
-// Internal assignments
-assign clk = CLOCK_50;
-//assign rst_n = SW[1]; // SI PUO' USARE UN BOTTONE
-
-/* Status LED
-assign LEDR[3] = buffer_active_sel;
-assign LEDR[2] = audio_buffer_filled;
-assign LEDR[1] = audio_buffer_empty;
-assign LEDR[0] = audio_buffer_empty_ack;
-*/
-/* Double buffer and RAM address translation
-assign ram_rd_addr[15:0] = buff_rd_addr;
-assign ram_wr_addr[15:0] = buff_wr_addr;
-assign ram_rd_addr[BUFFER_ADDR_BITS] = buff_active_sel;
-assign ram_wr_addr[BUFFER_ADDR_BITS] = !buff_active_sel;
-*/
+// Private assignments
 assign right_channel = SW[0];
+assign clk = CLOCK_50;
+
 
 // Synch rstn input
 always @ (posedge CLOCK_50) begin
@@ -102,20 +81,18 @@ always @ (posedge CLOCK_50) begin
 	rst_n <= rstn_synch;
 end
 
+
 Codec_interface codec(
     .clk(clk),
     .rst_n(rst_n),
-    
     // Audio codec physical pins
     .codec_aud_xck_o(AUD_XCK),
     .codec_aud_bclk_i(AUD_BCLK),
     .codec_aud_adcdat_i(AUD_ADCDAT),
     .codec_aud_adclrck_i(AUD_ADCLRCK),
-    
-    // shared I2C bus
+    // Shared I2C bus
     .codec_i2c_sclk_o(I2C_SCLK),
     .codec_i2c_sdat_io(I2C_SDAT),
-    
     // Buffer interface
     .codec_buff_raddr_i(buff_rd_addr),
     .codec_buff_start_o(fft_start),
@@ -123,19 +100,48 @@ Codec_interface codec(
 	 .codec_channel_select_i(right_channel)
 );
 
-FFT_block FFT_calc (
-    .clk(clk),
-    .rst_n(rst_n),
-    //SEGNALI PER FFT BLOCK
-	 .start_i(fft_start),
-	 //.done(),
-	 //interfaccia buffer
-	 .address_o(buff_rd_addr),
-	 .data_i(buff_rd_data)
-	 //...
 
+fft_block FFT_calc (
+    // Input
+	 .clk(clk),
+	 .rst_n(rst_n),
+    .data_i(buff_rd_data),
+	 .start_i(fft_start),
+	 // Output
+    .read_input_buffer_address_o(buff_rd_addr),
+	 .fft_done_o(fft_done_w),
+	 .write_vga_buffer_address1_o(write_vga_buffer_address1_w),
+	 .write_vga_buffer_address2_o(write_vga_buffer_address2_w),
+	 .fft_sample1_real_o(fft_sample1_real_w),
+	 .fft_sample1_img_o(fft_sample1_img_w),
+	 .fft_sample2_real_o(fft_sample2_real_w),
+	 .fft_sample2_img_o(fft_sample2_img_w),
+	 .vga_start_o(vga_start_w)
 );
 
-// EVENTI GLOBALI CHE CI SERVANO QUI
+
+vga_block vga_output (
+	// VGA physical pins
+	.vga_clk(VGA_CLK),
+	.vga_blank(VGA_BLANK),
+	.vga_sync(VGA_SYNC),
+	.vga_h_sync(VGA_HS),
+	.vga_v_sync(VGA_VS),
+	.vga_R(VGA_R),
+	.vga_G(VGA_G),
+	.vga_B(VGA_B),
+	// Global signals
+	.clk(clk),
+	.rst_n(rst_n),
+	// Control signals
+	.fft_done_i(fft_done_w),
+	.write_vga_buffer_address1_i(write_vga_buffer_address1_w),
+	.write_vga_buffer_address2_i(write_vga_buffer_address2_w),
+	.fft_sample1_real_i(fft_sample1_real_w),
+	.fft_sample1_img_i(fft_sample1_img_w),
+	.fft_sample2_real_i(fft_sample2_real_w),
+	.fft_sample2_img_i(fft_sample2_img_w),
+	.vga_start_i(vga_start_w)
+);
 
 endmodule

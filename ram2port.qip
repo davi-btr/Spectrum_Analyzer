@@ -4,3 +4,4 @@ set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "ram2po
 set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "ram2port.bsf"]
 set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "ram2port_inst.v"]
 set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "ram2port_bb.v"]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "ram2port_syn.v"]

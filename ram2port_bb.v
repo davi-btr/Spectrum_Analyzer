@@ -112,7 +112,7 @@ endmodule
 // Retrieval info: PRIVATE: REGrren NUMERIC "0"
 // Retrieval info: PRIVATE: REGwraddress NUMERIC "1"
 // Retrieval info: PRIVATE: REGwren NUMERIC "1"
-// Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "0"
+// Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "1"
 // Retrieval info: PRIVATE: USE_DIFF_CLKEN NUMERIC "0"
 // Retrieval info: PRIVATE: UseDPRAM NUMERIC "1"
 // Retrieval info: PRIVATE: VarWidth NUMERIC "0"
@@ -174,4 +174,5 @@ endmodule
 // Retrieval info: GEN_FILE: TYPE_NORMAL ram2port.bsf TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL ram2port_inst.v TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL ram2port_bb.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram2port_syn.v TRUE
 // Retrieval info: LIB_FILE: altera_mf

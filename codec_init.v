@@ -7,23 +7,22 @@ module codec_init (
 );
 
 // Params
-localparam CLK_Freq = 50 * 1000 * 1000;	//ex. 50MHz
-localparam I2C_Freq = 250 * 1000;			//ex. 250kHz
+localparam CLK_Freq = 50 * 1000 * 1000;
+localparam I2C_Freq = 250 * 1000;
 
-// Commands list
-localparam Dummy_DATA	=	0;
-localparam SET_LIN_L	=	1;
-localparam SET_LIN_R	=	2;
-localparam SET_HEAD_L	=	3;
-localparam SET_HEAD_R	=	4;
-localparam A_PATH_CTRL	=	5;
-localparam D_PATH_CTRL	=	6;
-localparam POWER_ON	    =	7;
-localparam SET_FORMAT	=	8;
-localparam SAMPLE_CTRL	=	9;
-localparam SET_ACTIVE	=	10;
-localparam CMD_NUM	    =	11;
-localparam VOL = 7'd120;
+// LUT index (command number)
+localparam Dummy_DATA		=	0;
+localparam SET_LIN_L			=	1;
+localparam SET_LIN_R			=	2;
+localparam SET_HEAD_L		=	3;
+localparam SET_HEAD_R		=	4;
+localparam AUD_PATH_CTRL	=	5;
+localparam DAT_PATH_CTRL	=	6;
+localparam POWER_ON	   	=	7;
+localparam SET_FORMAT		=	8;
+localparam SAMPLE_CTRL		=	9;
+localparam SET_ACTIVE		=	10;
+localparam CMD_NUM	   	=	11;
 
 // Ports definition
 input  clk;
@@ -34,106 +33,87 @@ output reg init_done_o;
 
 // Internal regs
 reg	[15:0]	fr_div_cnt;
-reg	[15:0]	i2c_data;
-reg			i2c_slowclk;
+reg	[23:0]	i2c_data;
 reg			i2c_go;
 reg	[15:0]	DATAWORD;
 reg	[3:0]	CMD;
 reg	[1:0]	codec_init_fsm_state;
+reg	i2c_slowclk;
 
 // Internal wires
-wire mI2C_END;
-wire mI2C_ACK;
+wire i2c_end;
+wire i2c_ack;
 
-i2c mI2C ( 	
-    .CLK(i2c_slowclk),
-    .RST_L(rst_n),
+i2c i2c ( 	
+    .CLOCK(i2c_slowclk),
+    .RESET(rst_n),
         
     .GO(i2c_go),
-    .READY(mI2C_END),
-    .ACK(mI2C_ACK),	
+    .END(i2c_end),
+    .ACK(i2c_ack),	
     .I2C_DATA(i2c_data),
     
     .I2C_SCLK(i2c_sclk_o),
-    .I2C_SDAT(i2c_sdat_io),
-	 
-	 .SD_COUNTER(),
-	 .SDO()
+    .I2C_SDAT(i2c_sdat_io)
 );
 
-// I2C Control Clock
-always@(posedge clk)
-begin /*
-    if(!rst_n)
-    begin
-        i2c_slowclk	<=	0;
-        fr_div_cnt	<=	0;
-    end
-    else
-    begin*/
-        if( fr_div_cnt < CLK_Freq / (2*I2C_Freq) - 1)	//per avere clock a I2C_freq
-            fr_div_cnt <= fr_div_cnt+16'd1;
-        else begin
-            fr_div_cnt  <= 0;
-            i2c_slowclk <= ~i2c_slowclk;
-        end
-    /*end*/
+// I2C clock generation (frequency division)
+always @(posedge clk) begin
+	fr_div_cnt <= fr_div_cnt+16'd1;
+	if (fr_div_cnt == (CLK_Freq/(I2C_Freq) - 1))	fr_div_cnt <= 0;
+	if (fr_div_cnt == (CLK_Freq/(2*I2C_Freq) - 1))	i2c_slowclk <= 0;
+	else i2c_slowclk <= 1;
 end
 
-// Main FSM to send ordered commands
-always@(posedge i2c_slowclk /*or negedge rst_n*/) begin
+
+always@(posedge i2c_slowclk) begin
     if(!rst_n) begin
         CMD	<=	0;
-		  init_done_o <= 0;
         codec_init_fsm_state	<=	0;
         i2c_go		<=	0;
+		  init_done_o <= 0;
     end else begin
         if(CMD<CMD_NUM) begin
 				init_done_o <= 0;
             case(codec_init_fsm_state)
-                0:	begin
-                    i2c_data	<=	DATAWORD;
+                0:	begin	// prepara comando
+                    i2c_data	<=	{8'h34,DATAWORD};
                     i2c_go		<=	1;
-                    codec_init_fsm_state	<=	0;
-						  if (mI2C_ACK) begin
-								i2c_go <= 0;
-								codec_init_fsm_state <= 1;
-						  end
+                    codec_init_fsm_state	<=	1;
                 end
-                1:	begin
-							//i2c_go <= 0;
-                    if (mI2C_END) begin
-							codec_init_fsm_state	<=	2;
-                    end else begin
-                     codec_init_fsm_state	<=	1;		
-						  end
+                1:	begin	// aspetta termine invio
+                    if(i2c_end) begin
+                        if(!i2c_ack)
+                            codec_init_fsm_state	<=	2;
+                        else
+                            codec_init_fsm_state	<=	0;							
+                        i2c_go		<=	0;
+                    end
                 end
-                2:	begin
+                2:	begin	// comando successivo
                     CMD	<=	CMD+4'd1;
                     codec_init_fsm_state	<=	0;
                 end
             endcase
 			end else begin
-				init_done_o <= 1;
+				init_done_o <= 1;	// I2S start
 			end
     end
 end
 
-// LUT to 
 always begin
 	case(CMD)
-        Dummy_DATA	:	DATAWORD	<=	16'h0000;	//scegliere eventualmente altro, <= serve?
-        SET_LIN_L	:	DATAWORD	<=	{7'd0,9'b000010111};
-        SET_LIN_R	:	DATAWORD	<=	{7'd1,9'b000010111};
-        SET_HEAD_L	:	DATAWORD	<=	{7'd2,9'b000000000};
-        SET_HEAD_R	:	DATAWORD	<=	{7'd3,9'b000000000};
-        A_PATH_CTRL	:	DATAWORD	<=	{7'd4,9'b000000010};
-        D_PATH_CTRL	:	DATAWORD	<=	{7'd5,9'b000001000};
-        POWER_ON	:	DATAWORD	<=	{7'd6,9'b001101010};
-        SET_FORMAT	:	DATAWORD	<=	{7'd7,9'b000000010};
-        SAMPLE_CTRL	:	DATAWORD	<=	{7'd8,9'b000000000};
-        SET_ACTIVE	:	DATAWORD	<=	{7'd9,9'b000000001};
-        default		:	DATAWORD	<=	16'h0000;
+        SET_LIN_L			:	DATAWORD	<=	{7'd0,9'b000010111};		// linea sinistra attiva e volume in ingresso
+        SET_LIN_R			:	DATAWORD	<=	{7'd1,9'b000010111};		// linea destra attiva e volume in ingresso
+        SET_HEAD_L		:	DATAWORD	<=	{7'd2,9'b001111001};		// output sinistro attivo (per feedback)
+        SET_HEAD_R		:	DATAWORD	<=	{7'd3,9'b001111001};		// output destro attivo (per feedback)
+        AUD_PATH_CTRL	:	DATAWORD	<=	{7'd4,9'b000001010};		// no mic, bypass attivo (per feedback)
+        DAT_PATH_CTRL	:	DATAWORD	<=	{7'd5,9'b000001000};		// DAC mute (non usato)
+        POWER_ON			:	DATAWORD	<=	{7'd6,9'b000000000};		// Attivazione alimentazione blocchi
+        SET_FORMAT		:	DATAWORD	<=	{7'd7,9'b001000010};		// I2S, 16 bit
+        SAMPLE_CTRL		:	DATAWORD	<=	{7'd8,9'b000000000};		// 48kHz, normal mode
+        SET_ACTIVE		:	DATAWORD	<=	{7'd9,9'b000000001};		// Avvio
+        default			:	DATAWORD	<=	16'h0017;	//dummy
 	endcase
 end
 

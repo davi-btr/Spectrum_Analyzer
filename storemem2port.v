@@ -47,8 +47,8 @@ module storemem2port (
 	q_a,
 	q_b);
 
-	input	[3:0]  address_a;
-	input	[3:0]  address_b;
+	input	[9:0]  address_a;
+	input	[9:0]  address_b;
 	input	  clock;
 	input	[15:0]  data_a;
 	input	[15:0]  data_b;
@@ -104,8 +104,8 @@ module storemem2port (
 		altsyncram_component.indata_reg_b = "CLOCK0",
 		altsyncram_component.intended_device_family = "Cyclone II",
 		altsyncram_component.lpm_type = "altsyncram",
-		altsyncram_component.numwords_a = 16,
-		altsyncram_component.numwords_b = 16,
+		altsyncram_component.numwords_a = 1024,
+		altsyncram_component.numwords_b = 1024,
 		altsyncram_component.operation_mode = "BIDIR_DUAL_PORT",
 		altsyncram_component.outdata_aclr_a = "NONE",
 		altsyncram_component.outdata_aclr_b = "NONE",
@@ -113,8 +113,8 @@ module storemem2port (
 		altsyncram_component.outdata_reg_b = "UNREGISTERED",
 		altsyncram_component.power_up_uninitialized = "FALSE",
 		altsyncram_component.read_during_write_mode_mixed_ports = "DONT_CARE",
-		altsyncram_component.widthad_a = 4,
-		altsyncram_component.widthad_b = 4,
+		altsyncram_component.widthad_a = 10,
+		altsyncram_component.widthad_b = 10,
 		altsyncram_component.width_a = 16,
 		altsyncram_component.width_b = 16,
 		altsyncram_component.width_byteena_a = 1,

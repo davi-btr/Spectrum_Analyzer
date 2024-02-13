@@ -1,0 +1,21 @@
+module pipe3 (
+	in, 
+	out, 
+	ck
+);
+
+input ck;
+input [9:0] in;
+output reg [9:0] out = 10'b0;
+
+reg [9:0] q1 = 10'b0;
+reg [9:0] q2 = 10'b0;
+
+always @ (posedge ck)
+begin
+	q1 <= in;
+	q2 <= q1;
+	out <= q2;
+end
+
+endmodule

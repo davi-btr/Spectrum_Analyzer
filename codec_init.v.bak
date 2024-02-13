@@ -1,15 +1,16 @@
 module codec_init (
-    clk_i,
-    rst_n_i,
+    clk,
+    rst_n,
     i2c_sclk_o,
-    i2c_sdat_io
+    i2c_sdat_io,
+	 init_done_o
 );
 
 // Params
 localparam CLK_Freq = 50 * 1000 * 1000;	//ex. 50MHz
-localparam I2C_Freq = 300 * 1000;			//ex. 300kHz
+localparam I2C_Freq = 250 * 1000;			//ex. 250kHz
 
-// Lut index
+// Commands list
 localparam Dummy_DATA	=	0;
 localparam SET_LIN_L	=	1;
 localparam SET_LIN_R	=	2;
@@ -25,99 +26,113 @@ localparam CMD_NUM	    =	11;
 localparam VOL = 7'd120;
 
 // Ports definition
-input  clk_i;
-input  rst_n_i;
+input  clk;
+input  rst_n;
 output i2c_sclk_o;
 inout  i2c_sdat_io;
+output reg init_done_o;
 
 // Internal regs
-reg	[15:0]	mI2C_CLK_DIV;
-reg	[15:0]	mI2C_DATA;
-reg			mI2C_CTRL_CLK;
-reg			mI2C_GO;
+reg	[15:0]	fr_div_cnt;
+reg	[15:0]	i2c_data;
+reg			i2c_slowclk;
+reg			i2c_go;
 reg	[15:0]	DATAWORD;
 reg	[3:0]	CMD;
-reg	[1:0]	mSetup_ST;
+reg	[1:0]	codec_init_fsm_state;
 
 // Internal wires
 wire mI2C_END;
 wire mI2C_ACK;
 
 i2c mI2C ( 	
-    .CLK(mI2C_CTRL_CLK),
-    .RST_L(rst_n_i),
+    .CLK(i2c_slowclk),
+    .RST_L(rst_n),
         
-    .GO(mI2C_GO),
+    .GO(i2c_go),
     .READY(mI2C_END),
     .ACK(mI2C_ACK),	
-    .I2C_DATA(mI2C_DATA),
+    .I2C_DATA(i2c_data),
     
     .I2C_SCLK(i2c_sclk_o),
-    .I2C_SDAT(i2c_sdat_io)
+    .I2C_SDAT(i2c_sdat_io),
+	 
+	 .SD_COUNTER(),
+	 .SDO()
 );
 
 // I2C Control Clock
-always@(posedge clk_i)
-begin
-    if(!rst_n_i)
+always@(posedge clk)
+begin /*
+    if(!rst_n)
     begin
-        mI2C_CTRL_CLK	<=	0;
-        mI2C_CLK_DIV	<=	0;
+        i2c_slowclk	<=	0;
+        fr_div_cnt	<=	0;
     end
     else
-    begin
-        if( mI2C_CLK_DIV < 8 )	//(CLK_Freq/I2C_Freq)
-            mI2C_CLK_DIV <= mI2C_CLK_DIV+16'd1;
+    begin*/
+        if( fr_div_cnt < CLK_Freq / (2*I2C_Freq) - 1)	//per avere clock a I2C_freq
+            fr_div_cnt <= fr_div_cnt+16'd1;
         else begin
-            mI2C_CLK_DIV  <= 0;
-            mI2C_CTRL_CLK <= ~mI2C_CTRL_CLK;
+            fr_div_cnt  <= 0;
+            i2c_slowclk <= ~i2c_slowclk;
         end
-    end
+    /*end*/
 end
 
-always@(posedge mI2C_CTRL_CLK or negedge rst_n_i) begin
-    if(!rst_n_i) begin
+// Main FSM to send ordered commands
+always@(posedge i2c_slowclk /*or negedge rst_n*/) begin
+    if(!rst_n) begin
         CMD	<=	0;
-        mSetup_ST	<=	0;
-        mI2C_GO		<=	0;
+		  init_done_o <= 0;
+        codec_init_fsm_state	<=	0;
+        i2c_go		<=	0;
     end else begin
-        if(CMD<CMD_NUM)
-            case(mSetup_ST)
+        if(CMD<CMD_NUM) begin
+				init_done_o <= 0;
+            case(codec_init_fsm_state)
                 0:	begin
-                    mI2C_DATA	<=	DATAWORD;
-                    mI2C_GO		<=	1;
-                    mSetup_ST	<=	1;
+                    i2c_data	<=	DATAWORD;
+                    i2c_go		<=	1;
+                    codec_init_fsm_state	<=	0;
+						  if (mI2C_ACK) begin
+								i2c_go <= 0;
+								codec_init_fsm_state <= 1;
+						  end
                 end
                 1:	begin
-                    if(mI2C_END) begin
-                        if(!mI2C_ACK)
-                            mSetup_ST	<=	2;
-                        else
-                            mSetup_ST	<=	0;							
-                        mI2C_GO		<=	0;
-                    end
+							//i2c_go <= 0;
+                    if (mI2C_END) begin
+							codec_init_fsm_state	<=	2;
+                    end else begin
+                     codec_init_fsm_state	<=	1;		
+						  end
                 end
                 2:	begin
                     CMD	<=	CMD+4'd1;
-                    mSetup_ST	<=	0;
+                    codec_init_fsm_state	<=	0;
                 end
             endcase
+			end else begin
+				init_done_o <= 1;
+			end
     end
 end
 
+// LUT to 
 always begin
 	case(CMD)
-        Dummy_DATA	:	DATAWORD	<=	16'h0000;
-        SET_LIN_L	:	DATAWORD	<=	16'h0000;
-        SET_LIN_R	:	DATAWORD	<=	16'h0200;
-        SET_HEAD_L	:	DATAWORD	<=	{8'h04,1'b1,VOL};
-        SET_HEAD_R	:	DATAWORD	<=	{8'h06,1'b1,VOL};
-        A_PATH_CTRL	:	DATAWORD	<=	16'h0812;
-        D_PATH_CTRL	:	DATAWORD	<=	16'h0A04;
-        POWER_ON	:	DATAWORD	<=	16'h0C00;
-        SET_FORMAT	:	DATAWORD	<=	16'h0E02;
-        SAMPLE_CTRL	:	DATAWORD	<=	16'h1022;
-        SET_ACTIVE	:	DATAWORD	<=	16'h1201;
+        Dummy_DATA	:	DATAWORD	<=	16'h0000;	//scegliere eventualmente altro, <= serve?
+        SET_LIN_L	:	DATAWORD	<=	{7'd0,9'b000010111};
+        SET_LIN_R	:	DATAWORD	<=	{7'd1,9'b000010111};
+        SET_HEAD_L	:	DATAWORD	<=	{7'd2,9'b000000000};
+        SET_HEAD_R	:	DATAWORD	<=	{7'd3,9'b000000000};
+        A_PATH_CTRL	:	DATAWORD	<=	{7'd4,9'b000000010};
+        D_PATH_CTRL	:	DATAWORD	<=	{7'd5,9'b000001000};
+        POWER_ON	:	DATAWORD	<=	{7'd6,9'b001101010};
+        SET_FORMAT	:	DATAWORD	<=	{7'd7,9'b000000010};
+        SAMPLE_CTRL	:	DATAWORD	<=	{7'd8,9'b000000000};
+        SET_ACTIVE	:	DATAWORD	<=	{7'd9,9'b000000001};
         default		:	DATAWORD	<=	16'h0000;
 	endcase
 end

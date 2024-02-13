@@ -55,8 +55,8 @@ module  cmplx_mult_altmult_complex_5jo
 	input   [31:0]  dataa_real;
 	input   [31:0]  datab_imag;
 	input   [31:0]  datab_real;
-	output   [63:0]  result_imag;
-	output   [63:0]  result_real;
+	output   [63:0]  result_imag; // = 64'b0;
+	output   [63:0]  result_real; // = 64'b0;
 
 	wire  [63:0]   wire_mult_add1_result;
 	wire  [63:0]   wire_mult_add2_result;
